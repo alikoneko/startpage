@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Tab</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a1a1a;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            transition: background-image 0.5s ease-in-out;
+            margin: 0;
+            height: 100vh;
+            overflow: hidden;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .background-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .container {
+            z-index: 10;
+        }
+
+        .search-bar {
+            width: 100%;
+            max-width: 600px;
+        }
+
+        input[type="text"] {
+            background-color: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(10px);
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .shortcut-item:hover .shortcut-options {
+            opacity: 1;
+        }
+
+        .modal-bg {
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+        }
+    </style>
+</head>
+<body class="bg-gray-900">
+    <!-- Overlay for better text readability -->
+    <div class="background-overlay"></div>
+
+    <!-- Buttons Section -->
+    <div class="fixed bottom-6 right-6 z-20 flex space-x-4">
+        <!-- Add Shortcut Button -->
+        <button id="add-shortcut-btn" class="cursor-pointer bg-white/20 hover:bg-white/30 text-white p-3 rounded-full shadow-lg transition-colors duration-200">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+        </button>
+        <!-- Wallpaper Upload Button -->
+        <label for="wallpaper-upload" class="cursor-pointer bg-white/20 hover:bg-white/30 text-white p-3 rounded-full shadow-lg transition-colors duration-200">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            </svg>
+        </label>
+        <input type="file" id="wallpaper-upload" accept="image/*" />
+    </div>
+
+    <div class="container flex flex-col items-center justify-center space-y-6 p-4">
+        <!-- Google Search Bar -->
+        <form id="search-form" class="search-bar">
+            <div class="relative">
+                <input
+                    type="text"
+                    id="search-input"
+                    class="w-full h-12 px-6 pr-24 rounded-full text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200"
+                    placeholder="Search Google..."
+                />
+                <div class="absolute right-4 top-1/2 -translate-y-1/2 flex space-x-4">
+                    <!-- Standard Search Button -->
+                    <button type="submit" class="text-white/80 hover:text-white/100">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </button>
+                    <!-- AI Mode Button -->
+                    <button type="button" id="ai-search-button" class="text-white/80 hover:text-white/100">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2L22 12L12 22L2 12Z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <!-- Shortcuts Container -->
+        <div id="shortcuts-container" class="mt-8 flex flex-wrap justify-center items-center gap-6 max-w-2xl">
+            <!-- Shortcuts will be dynamically added here -->
+        </div>
+    </div>
+
+    <!-- Shortcut Modal -->
+    <div id="shortcut-modal" class="fixed inset-0 hidden modal-bg z-30 flex items-center justify-center p-4">
+        <div class="bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-sm">
+            <h3 id="modal-title" class="text-lg font-bold mb-4">Add Shortcut</h3>
+            <form id="shortcut-form" class="flex flex-col space-y-4">
+                <input type="hidden" id="shortcut-id" />
+                <div>
+                    <label for="shortcut-name" class="block text-sm font-medium text-gray-300">Name</label>
+                    <input type="text" id="shortcut-name" class="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white focus:ring-blue-500 focus:border-blue-500" required />
+                </div>
+                <div>
+                    <label for="shortcut-url" class="block text-sm font-medium text-gray-300">URL</label>
+                    <input type="url" id="shortcut-url" class="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white focus:ring-blue-500 focus:border-blue-500" placeholder="https://www.example.com" required />
+                </div>
+                <div class="flex justify-end space-x-4 mt-4">
+                    <button type="button" id="cancel-btn" class="px-4 py-2 text-sm font-medium rounded-md text-gray-300 bg-gray-700 hover:bg-gray-600">Cancel</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const DB_NAME = 'NewTabDB';
+        const DB_VERSION = 2;
+        const WALLPAPER_STORE = 'wallpapers';
+        const SHORTCUTS_STORE = 'shortcuts';
+
+        let db;
+
+        // Function to open and initialize the IndexedDB database
+        function openDatabase() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+                request.onupgradeneeded = (event) => {
+                    db = event.target.result;
+                    if (!db.objectStoreNames.contains(WALLPAPER_STORE)) {
+                        db.createObjectStore(WALLPAPER_STORE);
+                    }
+                    if (!db.objectStoreNames.contains(SHORTCUTS_STORE)) {
+                        const shortcutsStore = db.createObjectStore(SHORTCUTS_STORE, { keyPath: 'id', autoIncrement: true });
+                        shortcutsStore.createIndex('url', 'url', { unique: true });
+                    }
+                    console.log('IndexedDB upgraded and object stores created.');
+                };
+
+                request.onsuccess = (event) => {
+                    db = event.target.result;
+                    resolve(db);
+                };
+
+                request.onerror = (event) => {
+                    console.error('Error opening IndexedDB:', event.target.error);
+                    reject(event.target.error);
+                };
+            });
+        }
+
+        // --- Wallpaper Functions ---
+
+        async function saveWallpaper(wallpaperBlob) {
+            if (!db) await openDatabase();
+            const transaction = db.transaction([WALLPAPER_STORE], 'readwrite');
+            const store = transaction.objectStore(WALLPAPER_STORE);
+            store.put(wallpaperBlob, 'currentWallpaper');
+            console.log('Wallpaper saved to IndexedDB.');
+        }
+
+        async function loadWallpaper() {
+            if (!db) await openDatabase();
+            const transaction = db.transaction([WALLPAPER_STORE], 'readonly');
+            const store = transaction.objectStore(WALLPAPER_STORE);
+            const request = store.get('currentWallpaper');
+
+            request.onsuccess = (event) => {
+                const wallpaperBlob = event.target.result;
+                if (wallpaperBlob) {
+                    console.log('Wallpaper found in IndexedDB. Applying...');
+                    const imageUrl = URL.createObjectURL(wallpaperBlob);
+                    document.body.style.backgroundImage = `url(${imageUrl})`;
+                } else {
+                    console.log('No wallpaper found in IndexedDB.');
+                }
+            };
+
+            request.onerror = (event) => {
+                console.error('Error loading wallpaper:', event.target.error);
+            };
+        }
+
+        // --- Shortcut Functions ---
+
+        async function saveShortcut(shortcut) {
+            if (!db) await openDatabase();
+            const transaction = db.transaction([SHORTCUTS_STORE], 'readwrite');
+            const store = transaction.objectStore(SHORTCUTS_STORE);
+
+            if (shortcut.id) {
+                // Update an existing shortcut
+                store.put(shortcut);
+            } else {
+                // Add a new shortcut, without an ID, as IndexedDB handles it
+                const newShortcut = { name: shortcut.name, url: shortcut.url };
+                store.add(newShortcut);
+            }
+
+            transaction.oncomplete = () => {
+                console.log('Shortcut saved.');
+                loadShortcuts();
+                // Clear the form after saving
+                document.getElementById('shortcut-form').reset();
+            };
+            transaction.onerror = (event) => {
+                console.error('Error saving shortcut:', event.target.error);
+            };
+        }
+
+        async function deleteShortcut(id) {
+            if (!db) await openDatabase();
+            const transaction = db.transaction([SHORTCUTS_STORE], 'readwrite');
+            const store = transaction.objectStore(SHORTCUTS_STORE);
+            store.delete(id);
+
+            transaction.oncomplete = () => {
+                console.log('Shortcut deleted.');
+                loadShortcuts();
+            };
+            transaction.onerror = (event) => {
+                console.error('Error deleting shortcut:', event.target.error);
+            };
+        }
+
+        async function loadShortcuts() {
+            if (!db) await openDatabase();
+            const transaction = db.transaction([SHORTCUTS_STORE], 'readonly');
+            const store = transaction.objectStore(SHORTCUTS_STORE);
+            const request = store.getAll();
+
+            request.onsuccess = (event) => {
+                const shortcuts = event.target.result;
+                renderShortcuts(shortcuts);
+            };
+
+            request.onerror = (event) => {
+                console.error('Error loading shortcuts:', event.target.error);
+            };
+        }
+
+        function renderShortcuts(shortcuts) {
+            const container = document.getElementById('shortcuts-container');
+            container.innerHTML = '';
+            shortcuts.forEach(shortcut => {
+                const shortcutDiv = document.createElement('div');
+                shortcutDiv.className = 'shortcut-item w-20 h-20 flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-200 relative group';
+                
+                // Shortcut link
+                const link = document.createElement('a');
+                link.href = shortcut.url;
+                link.className = 'flex flex-col items-center justify-center w-full h-full';
+                link.rel = "noopener noreferrer"; // Good practice for external links
+                
+                // Favicon image
+                const img = document.createElement('img');
+                img.src = `https://www.google.com/s2/favicons?sz=64&domain=${new URL(shortcut.url).hostname}`;
+                img.alt = `${shortcut.name} favicon`;
+                img.className = 'w-10 h-10 rounded-full mb-1 shadow-md';
+                
+                // Shortcut name
+                const nameSpan = document.createElement('span');
+                nameSpan.textContent = shortcut.name.length > 8 ? shortcut.name.substring(0, 8) + '...' : shortcut.name;
+                nameSpan.className = 'text-xs text-white/80 mt-1 truncate w-full text-center';
+
+                link.appendChild(img);
+                link.appendChild(nameSpan);
+                shortcutDiv.appendChild(link);
+
+                // Options menu (hidden by default)
+                const optionsDiv = document.createElement('div');
+                optionsDiv.className = 'shortcut-options absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex space-x-1';
+
+                const editBtn = document.createElement('button');
+                editBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white/80 hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21H3v-3.5L15.232 5.232z" /></svg>`;
+                editBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    openModal('edit', shortcut);
+                };
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white/80 hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>`;
+                deleteBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    // Replacing `confirm` with a custom dialog
+                    const modalDiv = document.createElement('div');
+                    modalDiv.innerHTML = `
+                        <div class="fixed inset-0 modal-bg z-40 flex items-center justify-center p-4">
+                            <div class="bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-xs">
+                                <h3 class="text-lg font-bold mb-4">Confirm Deletion</h3>
+                                <p class="text-gray-300 mb-6">Are you sure you want to delete ${shortcut.name}?</p>
+                                <div class="flex justify-end space-x-4">
+                                    <button id="cancel-delete-btn" class="px-4 py-2 text-sm font-medium rounded-md text-gray-300 bg-gray-700 hover:bg-gray-600">Cancel</button>
+                                    <button id="confirm-delete-btn" class="px-4 py-2 text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700">Delete</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(modalDiv);
+
+                    document.getElementById('cancel-delete-btn').onclick = () => {
+                        modalDiv.remove();
+                    };
+
+                    document.getElementById('confirm-delete-btn').onclick = () => {
+                        deleteShortcut(shortcut.id);
+                        modalDiv.remove();
+                    };
+                };
+
+                optionsDiv.appendChild(editBtn);
+                optionsDiv.appendChild(deleteBtn);
+                shortcutDiv.appendChild(optionsDiv);
+
+                container.appendChild(shortcutDiv);
+            });
+        }
+        
+        // --- Modal Functions ---
+
+        const modal = document.getElementById('shortcut-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const form = document.getElementById('shortcut-form');
+        const shortcutIdInput = document.getElementById('shortcut-id');
+        const nameInput = document.getElementById('shortcut-name');
+        const urlInput = document.getElementById('shortcut-url');
+        const cancelButton = document.getElementById('cancel-btn');
+
+        function openModal(mode, shortcut = {}) {
+            if (mode === 'add') {
+                modalTitle.textContent = 'Add Shortcut';
+                shortcutIdInput.value = '';
+                nameInput.value = '';
+                urlInput.value = '';
+            } else if (mode === 'edit') {
+                modalTitle.textContent = 'Edit Shortcut';
+                shortcutIdInput.value = shortcut.id;
+                nameInput.value = shortcut.name;
+                urlInput.value = shortcut.url;
+            }
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const uploadInput = document.getElementById('wallpaper-upload');
+            const searchForm = document.getElementById('search-form');
+            const searchInput = document.getElementById('search-input');
+            const aiSearchButton = document.getElementById('ai-search-button');
+            const addShortcutBtn = document.getElementById('add-shortcut-btn');
+
+            // Open the database and then try to load the wallpaper and shortcuts
+            await openDatabase();
+            loadWallpaper();
+            loadShortcuts();
+
+            // Handle wallpaper upload
+            uploadInput.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    saveWallpaper(file);
+                    const imageUrl = URL.createObjectURL(file);
+                    document.body.style.backgroundImage = `url(${imageUrl})`;
+                }
+            });
+
+            // Handle standard search form submission
+            searchForm.addEventListener('submit', (event) => {
+                event.preventDefault();
+                const query = searchInput.value;
+                if (query) {
+                    window.location.href = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+                }
+            });
+
+            // Handle AI mode search button click
+            aiSearchButton.addEventListener('click', () => {
+                const query = searchInput.value;
+                if (query) {
+                    window.location.href = `https://www.google.com/search?q=${encodeURIComponent(query)}&udm=50`;
+                }
+            });
+
+            // Handle add shortcut button click
+            addShortcutBtn.addEventListener('click', () => {
+                openModal('add');
+            });
+
+            // Handle modal form submission
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const id = shortcutIdInput.value ? parseInt(shortcutIdInput.value) : undefined;
+                const name = nameInput.value;
+                const url = urlInput.value;
+
+                if (name && url) {
+                    const shortcut = { id, name, url };
+                    await saveShortcut(shortcut);
+                    closeModal();
+                }
+            });
+
+            // Handle modal close buttons
+            cancelButton.addEventListener('click', closeModal);
+            modal.addEventListener('click', (e) => {
+                if (e.target.id === 'shortcut-modal') {
+                    closeModal();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
