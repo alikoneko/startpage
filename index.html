@@ -399,9 +399,21 @@
             // Handle standard search form submission
             searchForm.addEventListener('submit', (event) => {
                 event.preventDefault();
-                const query = searchInput.value;
+                let query = searchInput.value.trim();
+
                 if (query) {
-                    window.location.href = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+                    // Simple URL validation
+                    const isUrl = /^https?:\/\//i.test(query) || (/\./.test(query) && !/\s/.test(query));
+                    if (isUrl) {
+                        // If it doesn't start with a protocol, add https://
+                        if (!/^https?:\/\//i.test(query)) {
+                            query = 'https://' + query;
+                        }
+                        window.location.href = query;
+                    } else {
+                        // It's a search query
+                        window.location.href = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+                    }
                 }
             });
 
